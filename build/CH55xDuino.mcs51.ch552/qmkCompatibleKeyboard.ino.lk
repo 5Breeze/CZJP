@@ -1,0 +1,30 @@
+-muwx
+-i C:\Users\bitshen\AppData\Local\Temp\arduino\sketches\1DFD87E1D5558FEA9992E2551320BE72/qmkCompatibleKeyboard.ino.elf
+-M
+-X 0x02f6
+-C 0x3800
+-b HOME = 0x0000
+-b XSEG = 0x010a
+-b PSEG = 0x010a
+-b ISEG = 0x0000
+-b BSEG = 0x0000
+-k C:\Users\bitshen\AppData\Local\Temp\arduino\sketches\1DFD87E1D5558FEA9992E2551320BE72
+-k C:\Users\bitshen\AppData\Local\Arduino15\packages\CH55xDuino\tools\sdcc\build.13407_4/lib/large_int_calc_stack_auto
+-l C:\Users\bitshen\AppData\Local\Temp\arduino\sketches\1DFD87E1D5558FEA9992E2551320BE72/optionalLink.lib
+-l C:\Users\bitshen\AppData\Local\Temp\arduino\sketches\1DFD87E1D5558FEA9992E2551320BE72/..\..\cores\9becc5894de6aaaf6e23db248649d931\core.lib
+-l mcs51
+-l libsdcc
+-l liblong
+-l liblonglong
+-l libint
+-l libfloat
+C:\Users\bitshen\AppData\Local\Temp\arduino\sketches\1DFD87E1D5558FEA9992E2551320BE72\sketch\qmkCompatibleKeyboard.ino.cpp.rel
+C:\Users\bitshen\AppData\Local\Temp\arduino\sketches\1DFD87E1D5558FEA9992E2551320BE72\sketch\src\WS2812.c.rel
+C:\Users\bitshen\AppData\Local\Temp\arduino\sketches\1DFD87E1D5558FEA9992E2551320BE72\sketch\src\userQmkCompatibleKeyboard\USBHIDKeyboardMouse.c.rel
+C:\Users\bitshen\AppData\Local\Temp\arduino\sketches\1DFD87E1D5558FEA9992E2551320BE72\sketch\src\userQmkCompatibleKeyboard\USBconstant.c.rel
+C:\Users\bitshen\AppData\Local\Temp\arduino\sketches\1DFD87E1D5558FEA9992E2551320BE72\sketch\src\userQmkCompatibleKeyboard\USBhandler.c.rel
+C:\Users\bitshen\AppData\Local\Temp\arduino\sketches\1DFD87E1D5558FEA9992E2551320BE72\sketch\src\userQmkCompatibleKeyboard\osDetection.c.rel
+C:\Users\bitshen\AppData\Local\Temp\arduino\sketches\1DFD87E1D5558FEA9992E2551320BE72\sketch\src\userQmkCompatibleKeyboard\via.c.rel
+C:\Users\bitshen\AppData\Local\Temp\arduino\sketches\1DFD87E1D5558FEA9992E2551320BE72\libraries\WS2812\WS2812.c.rel
+
+-e

@@ -79,8 +79,24 @@ void setup()
             // Layer0: Ctrl-C / Ctrl-V / Tab
             // Layer1: Cmd-C  / Cmd-V  / Tab
             const uint8_t defaultKeymap[] = {
-                0x01, 0x06,  0x01, 0x19,  0x00, 0x2B,
-                0x08, 0x06,  0x08, 0x19,  0x00, 0x2B
+    // Row 0
+    0x00, 0x04,   // A
+    0x00, 0x05,   // B
+    0x00, 0x06,   // C
+
+    // Row 1
+    0x00, 0x07,   // D
+    0x00, 0x08,   // E
+    0x00, 0x09,   // F
+        // Row 0
+    0x00, 0x0A,   // A
+    0x00, 0x0B,   // B
+    0x00, 0x0C,   // C
+
+    // Row 1
+    0x00, 0x0D,   // D
+    0x00, 0x0E,   // E
+    0x00, 0x0F,   // F
             };
             for (__data uint8_t i = 0; i < dataLength; i++) {
                 eeprom_write_byte(i, defaultKeymap[i]);
