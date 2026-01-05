@@ -196,8 +196,39 @@ __code uint8_t ReportDescriptor[] = {
     0x95, 0x03, //     REPORT_COUNT (3)
     0x81, 0x06, //     INPUT (Data,Var,Rel)
     0xc0,       //     END_COLLECTION
-    0xc0        // END_COLLECTION
-                // //todo: add media control
+    0xc0,        // END_COLLECTION
+    
+        // Consumer Control (媒体控制)
+    0x05, 0x0C,       // USAGE_PAGE (Consumer)
+    0x09, 0x01,       // USAGE (Consumer Control)
+    0xA1, 0x01,       // COLLECTION (Application)
+    0x85, 0x03,       //   REPORT_ID (3)
+    0x19, 0x00,       //   USAGE_MINIMUM (0)
+    0x2A, 0x3C, 0x02, //   USAGE_MAXIMUM (0x023C)
+    0x15, 0x00,       //   LOGICAL_MINIMUM (0)
+    0x26, 0x3C, 0x02, //   LOGICAL_MAXIMUM (0x023C)
+    0x95, 0x01,       //   REPORT_COUNT (1)
+    0x75, 0x10,       //   REPORT_SIZE (16)
+    0x81, 0x00,       //   INPUT (Data,Array,Abs)
+    0xC0,             // END_COLLECTION
+
+    // System Control (系统控制)
+    0x05, 0x01,       // USAGE_PAGE (Generic Desktop)
+    0x09, 0x80,       // USAGE (System Control)
+    0xA1, 0x01,       // COLLECTION (Application)
+    0x85, 0x04,       //   REPORT_ID (4)
+    0x19, 0x81,       //   USAGE_MINIMUM (System Power Down)
+    0x29, 0x83,       //   USAGE_MAXIMUM (System Wake Up)
+    0x15, 0x00,       //   LOGICAL_MINIMUM (0)
+    0x25, 0x01,       //   LOGICAL_MAXIMUM (1)
+    0x95, 0x03,       //   REPORT_COUNT (3)
+    0x75, 0x01,       //   REPORT_SIZE (1)
+    0x81, 0x02,       //   INPUT (Data,Var,Abs)
+    0x95, 0x01,       //   REPORT_COUNT (1)
+    0x75, 0x05,       //   REPORT_SIZE (5)
+    0x81, 0x01,       //   INPUT (Cnst,Ary,Abs)
+    0xC0,             // END_COLLECTION
+
 };
 
 __code uint8_t RawHIDReportDescriptor[] = {
@@ -237,3 +268,4 @@ __code uint16_t ManufacturerDescriptor[] = {
     (((7 + 1) * 2) | (DTYPE_String << 8)),
     '5','B','r','e','e','z','e',
 };
+

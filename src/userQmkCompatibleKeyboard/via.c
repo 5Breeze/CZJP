@@ -248,40 +248,189 @@ void via_process(void) {
   raw_hid_send();
 }
 
+// clang-format off
+#include "via.h"
+#include "USBhandler.h"
+#include <Arduino.h>
+#include "../../keyboardConfig.h"
+#include "USBHIDKeyboardMouse.h"
+#include "rgbLight.h"
+// clang-format on
+
+// ... (保留原有的 VIA 协议处理代码，enum、via_process 等函数) ...
+
 void press_qmk_key(__data uint8_t row, __xdata uint8_t col,
                    __xdata uint8_t layer, __xdata uint8_t press) {
   __data uint16_t keycode = dynamic_keymap_get_keycode(layer, row, col);
-  __data uint8_t application = (keycode >> 8) & 0x00FF;
-  __data uint8_t code = keycode & 0x00FF;
+  __data uint8_t high_byte = (keycode >> 8) & 0x00FF;
+  __data uint8_t low_byte = keycode & 0x00FF;
 
-  if (application >= 0x01 &&
-      application <= 0x1F) {
-    if (application & 0x10) {
-      for (__data uint8_t i = 0; i < 4; i++) {
-        if (application & (1 << i)) {
-          if (press) {
-            Keyboard_quantum_modifier_press(1 << (4 + i));
-          } else {
-            Keyboard_quantum_modifier_release(1 << (4 + i));
-          }
-        }
-      }
-    } else {
-      for (__data uint8_t i = 0; i < 4; i++) {
-        if (application & (1 << i)) {
-          if (press) {
-            Keyboard_quantum_modifier_press(1 << (0 + i));
-          } else {
-            Keyboard_quantum_modifier_release(1 << (0 + i));
-          }
-        }
-      }
+  // ==================== Mouse Keys ====================
+  // QK_MOUSE_CURSOR_UP to QK_MOUSE_WHEEL_RIGHT (0x00CD-0x00DC)
+  if (high_byte == 0x00 && low_byte >= 0xCD && low_byte <= 0xDC) {
+    switch (low_byte) {
+      case 0xCD: // MS_UP
+        if (press) Mouse_move(0, -8);
+        break;
+      case 0xCE: // MS_DOWN
+        if (press) Mouse_move(0, 8);
+        break;
+      case 0xCF: // MS_LEFT
+        if (press) Mouse_move(-8, 0);
+        break;
+      case 0xD0: // MS_RIGHT
+        if (press) Mouse_move(8, 0);
+        break;
+      case 0xD1: // MS_BTN1
+        if (press) Mouse_press(1);
+        else Mouse_release(1);
+        break;
+      case 0xD2: // MS_BTN2
+        if (press) Mouse_press(2);
+        else Mouse_release(2);
+        break;
+      case 0xD3: // MS_BTN3
+        if (press) Mouse_press(4);
+        else Mouse_release(4);
+        break;
+      case 0xD4: // MS_BTN4
+        if (press) Mouse_press(8);
+        else Mouse_release(8);
+        break;
+      case 0xD5: // MS_BTN5
+        if (press) Mouse_press(16);
+        else Mouse_release(16);
+        break;
+      case 0xD9: // MS_WHLU (Wheel up)
+        if (press) Mouse_scroll(1);
+        break;
+      case 0xDA: // MS_WHLD (Wheel down)
+        if (press) Mouse_scroll(-1);
+        break;
     }
+    return;
   }
 
-  if (press) {
-    Keyboard_quantum_regular_press(keycode & 0x00FF);
-  } else {
-    Keyboard_quantum_regular_release(keycode & 0x00FF);
+  // ==================== Modifier + Key Combos ====================
+  // QK_MODS range (0x0100-0x1FFF)
+  // Format: 0x0MMM KKKK where MMM = modifiers, KKKK = keycode
+  if (keycode >= 0x0100 && keycode <= 0x1FFF) {
+    __data uint8_t mods = (keycode >> 8) & 0x1F;
+    __data uint8_t key = keycode & 0xFF;
+    
+    if (press) {
+      // Press modifiers
+      if (mods & 0x01) Keyboard_quantum_modifier_press(0x01); // L Ctrl
+      if (mods & 0x02) Keyboard_quantum_modifier_press(0x02); // L Shift
+      if (mods & 0x04) Keyboard_quantum_modifier_press(0x04); // L Alt
+      if (mods & 0x08) Keyboard_quantum_modifier_press(0x08); // L GUI
+      if (mods & 0x10) Keyboard_quantum_modifier_press(0x10); // R Ctrl
+      
+      // Press key
+      Keyboard_quantum_regular_press(key);
+    } else {
+      // Release key
+      Keyboard_quantum_regular_release(key);
+      
+      // Release modifiers
+      if (mods & 0x01) Keyboard_quantum_modifier_release(0x01);
+      if (mods & 0x02) Keyboard_quantum_modifier_release(0x02);
+      if (mods & 0x04) Keyboard_quantum_modifier_release(0x04);
+      if (mods & 0x08) Keyboard_quantum_modifier_release(0x08);
+      if (mods & 0x10) Keyboard_quantum_modifier_release(0x10);
+    }
+    return;
+  }
+
+  // ==================== System Control Keys ====================
+  // KC_SYSTEM_POWER/SLEEP/WAKE (0x00A5-0x00A7)
+  if (high_byte == 0x00 && low_byte >= 0xA5 && low_byte <= 0xA7) {
+    __data uint8_t system_code = low_byte - 0xA4; // 1=Power, 2=Sleep, 3=Wake
+    if (press) {
+      System_press(system_code);
+    } else {
+      System_release();
+    }
+    return;
+  }
+
+  // ==================== Consumer Control Keys ====================
+  // Media keys (0x00A8-0x00C2)
+  if (high_byte == 0x00 && low_byte >= 0xA8 && low_byte <= 0xC2) {
+    if (press) {
+      __data uint16_t consumer_code = 0;
+      
+      switch (low_byte) {
+        case 0xA8: consumer_code = 0x00E2; break; // KC_AUDIO_MUTE
+        case 0xA9: consumer_code = 0x00E9; break; // KC_AUDIO_VOL_UP
+        case 0xAA: consumer_code = 0x00EA; break; // KC_AUDIO_VOL_DOWN
+        case 0xAB: consumer_code = 0x00B5; break; // KC_MEDIA_NEXT_TRACK
+        case 0xAC: consumer_code = 0x00B6; break; // KC_MEDIA_PREV_TRACK
+        case 0xAD: consumer_code = 0x00B7; break; // KC_MEDIA_STOP
+        case 0xAE: consumer_code = 0x00CD; break; // KC_MEDIA_PLAY_PAUSE
+        case 0xAF: consumer_code = 0x0183; break; // KC_MEDIA_SELECT
+        case 0xB0: consumer_code = 0x00B8; break; // KC_MEDIA_EJECT
+        case 0xB1: consumer_code = 0x018A; break; // KC_MAIL
+        case 0xB2: consumer_code = 0x0192; break; // KC_CALCULATOR
+        case 0xB3: consumer_code = 0x0194; break; // KC_MY_COMPUTER
+        case 0xB4: consumer_code = 0x0221; break; // KC_WWW_SEARCH
+        case 0xB5: consumer_code = 0x0223; break; // KC_WWW_HOME
+        case 0xB6: consumer_code = 0x0224; break; // KC_WWW_BACK
+        case 0xB7: consumer_code = 0x0225; break; // KC_WWW_FORWARD
+        case 0xB8: consumer_code = 0x0226; break; // KC_WWW_STOP
+        case 0xB9: consumer_code = 0x0227; break; // KC_WWW_REFRESH
+        case 0xBA: consumer_code = 0x022A; break; // KC_WWW_FAVORITES
+        case 0xBB: consumer_code = 0x00B3; break; // KC_MEDIA_FAST_FORWARD
+        case 0xBC: consumer_code = 0x00B4; break; // KC_MEDIA_REWIND
+        case 0xBD: consumer_code = 0x006F; break; // KC_BRIGHTNESS_UP
+        case 0xBE: consumer_code = 0x0070; break; // KC_BRIGHTNESS_DOWN
+        case 0xBF: consumer_code = 0x019F; break; // KC_CONTROL_PANEL
+        case 0xC0: consumer_code = 0x01CB; break; // KC_ASSISTANT
+        case 0xC1: consumer_code = 0x029F; break; // KC_MISSION_CONTROL
+        case 0xC2: consumer_code = 0x02A0; break; // KC_LAUNCHPAD
+        default:
+          return;
+      }
+      
+      Consumer_press(consumer_code);
+    } else {
+      Consumer_release();
+    }
+    return;
+  }
+
+  // ==================== Basic Keys ====================
+  // Standard keyboard keys (0x0000-0x00FF)
+  if (high_byte == 0x00 && low_byte <= 0xE7) {
+    // Modifier keys (0x00E0-0x00E7)
+    if (low_byte >= 0xE0 && low_byte <= 0xE7) {
+      __data uint8_t mod_bit = 1 << (low_byte - 0xE0);
+      if (press) {
+        Keyboard_quantum_modifier_press(mod_bit);
+      } else {
+        Keyboard_quantum_modifier_release(mod_bit);
+      }
+      return;
+    }
+    
+    // Regular keys (0x0004-0x00DF)
+    if (press) {
+      Keyboard_quantum_regular_press(low_byte);
+    } else {
+      Keyboard_quantum_regular_release(low_byte);
+    }
+    return;
+  }
+
+  // ==================== Transparent Key ====================
+  if (keycode == 0x0001) { // KC_TRANSPARENT
+    // Do nothing - fall through to lower layer
+    return;
+  }
+  
+  // ==================== No Operation ====================
+  if (keycode == 0x0000) { // KC_NO
+    // Do nothing
+    return;
   }
 }

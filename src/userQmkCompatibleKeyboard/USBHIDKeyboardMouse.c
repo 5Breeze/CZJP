@@ -22,6 +22,8 @@ volatile __xdata uint8_t UpPoint2_Busy = 0;
 
 __xdata uint8_t HIDKey[8] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
 __xdata uint8_t HIDMouse[4] = {0x0, 0x0, 0x0, 0x0};
+__xdata uint8_t HIDConsumer[2] = {0x0, 0x0};  // 媒体控制缓冲区
+__xdata uint8_t HIDSystem = 0x0;  // 系统控制缓冲区
 
 typedef void (*pTaskFn)(void);
 
@@ -76,7 +78,7 @@ uint8_t USB_EP1_send(__data uint8_t reportID) {
   __data uint16_t waitWriteCount = 0;
 
   waitWriteCount = 0;
-  while (UpPoint1_Busy) { // wait for 250ms or give up
+  while (UpPoint1_Busy) {
     waitWriteCount++;
     delayMicroseconds(5);
     if (waitWriteCount >= 50000)
@@ -85,18 +87,25 @@ uint8_t USB_EP1_send(__data uint8_t reportID) {
 
   if (reportID == 1) {
     Ep1Buffer[64 + 0] = 1;
-    for (__data uint8_t i = 0; i < sizeof(HIDKey); i++) { // load data for
-                                                          // upload
+    for (__data uint8_t i = 0; i < sizeof(HIDKey); i++) {
       Ep1Buffer[64 + 1 + i] = HIDKey[i];
     }
-    UEP1_T_LEN = 1 + sizeof(HIDKey); // data length
+    UEP1_T_LEN = 1 + sizeof(HIDKey);
   } else if (reportID == 2) {
     Ep1Buffer[64 + 0] = 2;
-    for (__data uint8_t i = 0; i < sizeof(HIDMouse);
-         i++) { // load data for upload
+    for (__data uint8_t i = 0; i < sizeof(HIDMouse); i++) {
       Ep1Buffer[64 + 1 + i] = ((uint8_t *)HIDMouse)[i];
     }
-    UEP1_T_LEN = 1 + sizeof(HIDMouse); // data length
+    UEP1_T_LEN = 1 + sizeof(HIDMouse);
+  } else if (reportID == 3) {  // Consumer Control
+    Ep1Buffer[64 + 0] = 3;
+    Ep1Buffer[64 + 1] = HIDConsumer[0];
+    Ep1Buffer[64 + 2] = HIDConsumer[1];
+    UEP1_T_LEN = 1 + 2;
+  } else if (reportID == 4) {  // System Control
+    Ep1Buffer[64 + 0] = 4;
+    Ep1Buffer[64 + 1] = HIDSystem;
+    UEP1_T_LEN = 1 + 1;
   } else if (reportID == 8) {
     Ep1Buffer[64 + 0] = 8;
     UEP1_T_LEN = 33;
@@ -105,8 +114,7 @@ uint8_t USB_EP1_send(__data uint8_t reportID) {
   }
 
   UpPoint1_Busy = 1;
-  UEP1_CTRL = UEP1_CTRL & ~MASK_UEP_T_RES |
-              UEP_T_RES_ACK; // upload data and respond ACK
+  UEP1_CTRL = UEP1_CTRL & ~MASK_UEP_T_RES | UEP_T_RES_ACK;
 
   return 1;
 }
@@ -224,5 +232,33 @@ uint8_t Mouse_move(__data int8_t x, __xdata int8_t y) {
 uint8_t Mouse_scroll(__data int8_t tilt) {
   HIDMouse[3] = tilt;
   USB_EP1_send(2);
+  return 1;
+}
+
+uint8_t Consumer_press(__data uint16_t k) {
+  HIDConsumer[0] = k & 0xFF;        // Low byte
+  HIDConsumer[1] = (k >> 8) & 0xFF; // High byte
+  USB_EP1_send(3);
+  return 1;
+}
+
+uint8_t Consumer_release(void) {
+  HIDConsumer[0] = 0x00;
+  HIDConsumer[1] = 0x00;
+  USB_EP1_send(3);
+  return 1;
+}
+
+uint8_t System_press(__data uint8_t k) {
+  // k = 1: Power Down, 2: Sleep, 3: Wake Up
+  // 使用位掩码: bit 0 = Power, bit 1 = Sleep, bit 2 = Wake
+  HIDSystem = (1 << (k - 1));
+  USB_EP1_send(4);
+  return 1;
+}
+
+uint8_t System_release(void) {
+  HIDSystem = 0x00;
+  USB_EP1_send(4);
   return 1;
 }
