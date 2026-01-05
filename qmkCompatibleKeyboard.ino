@@ -8,7 +8,25 @@
 #error "This example needs to be compiled with a USER USB setting"
 #endif
 
+
+#define NUM_LEDS 3
+#define COLOR_PER_LEDS 3
+#define NUM_BYTES (NUM_LEDS * COLOR_PER_LEDS)
+
+
+#define LONG_PRESS_TIME 500  // 长按阈值，毫秒，可自行调整
+
+bool button1Prev = false;
+bool button1Pressed = false;
+unsigned long button1PressTime = 0;
+
+#if NUM_BYTES > 255
+#error "NUM_BYTES can not be larger than 255."
+#endif
+
+#include "src/WS2812.h"
 #include "src/userQmkCompatibleKeyboard/USBHIDKeyboardMouse.h"
+#include "src/userQmkCompatibleKeyboard/rgbLight.h"
 #include "keyboardConfig.h"
 
 /* ================== 状态变量 ================== */
@@ -18,7 +36,6 @@ bool hall2Pressed = false;
 bool hall3Pressed = false;
 
 /* ---------- 全局变量 ---------- */
-bool button1Prev = false;
 unsigned long previousKeyScanMillis = 0;
 uint8_t layerInUse = 0;
 
@@ -107,32 +124,55 @@ void setup()
     pinMode(BUTTON1_PIN, INPUT_PULLUP);
     pinMode(ENC_A, INPUT_PULLUP);
     pinMode(ENC_B, INPUT_PULLUP);
+    /* RGB 初始化 */
+    rgb_init();
+    //Serial0_begin(9600); 
+    //Serial0_println("Hello");
 }
 
 /* ---------- 主循环 ---------- */
 void loop()
 {
     via_process();
-
     if ((signed int)(millis() - previousKeyScanMillis) < 5) {
         return;
     }
     previousKeyScanMillis = millis();
 
-    /* OS 自动选择 layer */
-    uint8_t osDetected = detected_host_os();
-    if (osDetected == OS_LINUX || osDetected == OS_WINDOWS) {
-        layerInUse = 0;
+    // /* OS 自动选择 layer */
+    // uint8_t osDetected = detected_host_os();
+    // if (osDetected == OS_LINUX || osDetected == OS_WINDOWS) {
+    //     layerInUse = 0;
+    // } else {
+    //     layerInUse = 1;
+    // }
+
+/* ---------- 普通按键 ---------- */
+bool button1 = !digitalRead(BUTTON1_PIN);
+
+/* 按下瞬间 */
+if (button1 && !button1Prev) {
+    button1PressTime = millis();
+    button1Pressed = true;
+}
+
+/* 松开瞬间 */
+if (!button1 && button1Prev && button1Pressed) {
+    unsigned long pressDuration = millis() - button1PressTime;
+
+    if (pressDuration < LONG_PRESS_TIME) {
+        /* 短按：正常触发 QMK 键 */
+        press_qmk_key(0, 1, layerInUse, true);
+        press_qmk_key(0, 1, layerInUse, false);
     } else {
-        layerInUse = 1;
+        /* 长按：切换层 */
+        layerInUse = !layerInUse;
     }
 
-    /* ---------- 普通按键 ---------- */
-    bool button1 = !digitalRead(BUTTON1_PIN);
-    if (button1 != button1Prev) {
-        button1Prev = button1;
-        press_qmk_key(0, 0, layerInUse, button1);
-    }
+    button1Pressed = false;
+}
+
+button1Prev = button1;
 
     /* ---------- 编码器 ---------- */
     static uint8_t step = 0;
@@ -145,8 +185,8 @@ void loop()
 
             if (enc > 0) {
                 // 顺时针 → key(0,1)
-                press_qmk_key(0, 1, layerInUse, true);
-                press_qmk_key(0, 1, layerInUse, false);
+                press_qmk_key(0, 0, layerInUse, true);
+                press_qmk_key(0, 0, layerInUse, false);
             } else {
                 // 逆时针 → key(0,2)
                 press_qmk_key(0, 2, layerInUse, true);
@@ -160,29 +200,29 @@ void loop()
     uint16_t hall1 = readHallADC(HALL1_ADC_CHANNEL);
     if (!hall1Pressed && hall1 > HALL_PRESS_THRESHOLD) {
       hall1Pressed = true;
-      press_qmk_key(1, 0, layerInUse, true);
+      press_qmk_key(1, 2, layerInUse, true);
     } else if (hall1Pressed && hall1 < HALL_RELEASE_THRESHOLD) {
       hall1Pressed = false;
-      press_qmk_key(1, 0, layerInUse, false);
+      press_qmk_key(1, 2, layerInUse, false);
     }
 
     /* -------- Hall 2 -------- */
     uint16_t hall2 = readHallADC(HALL2_ADC_CHANNEL);
     if (!hall2Pressed && hall2 > HALL_PRESS_THRESHOLD) {
       hall2Pressed = true;
-      press_qmk_key(1, 1, layerInUse, true);
+      press_qmk_key(1, 0, layerInUse, true);
     } else if (hall2Pressed && hall2 < HALL_RELEASE_THRESHOLD) {
       hall2Pressed = false;
-      press_qmk_key(1, 1, layerInUse, false);
+      press_qmk_key(1, 0, layerInUse, false);
     }
 
     /* -------- Hall 3 -------- */
     uint16_t hall3 = readHallADC(HALL3_ADC_CHANNEL);
     if (!hall3Pressed && hall3 > HALL_PRESS_THRESHOLD) {
       hall3Pressed = true;
-      press_qmk_key(1, 2, layerInUse, true);
+      press_qmk_key(1, 1, layerInUse, true);
     } else if (hall3Pressed && hall3 < HALL_RELEASE_THRESHOLD) {
       hall3Pressed = false;
-      press_qmk_key(1, 2, layerInUse, false);
+      press_qmk_key(1, 1, layerInUse, false);
     }
 }

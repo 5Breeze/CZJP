@@ -1,5 +1,5 @@
 {
-  "name": "5Breeze QMK",
+  "name": "5Breeze QMK RGB",
   "vendorId": "0x4249",
   "productId": "0x4287",
   "matrix": {"rows": 2, "cols": 3},
@@ -7,6 +7,18 @@
     "keymap": [
       ["0,0", "0,1", "0,2"],
       ["1,0", "1,1", "1,2"]
+    ]
+  },
+  "lighting": {
+    "extends": "qmk_rgblight",
+    "underglowEffects": [
+      ["All Off", 0],
+      ["Solid Color", 1]
+    ],
+    "supportedLightingValues": [
+      1,
+      2,
+      4
     ]
   }
 }

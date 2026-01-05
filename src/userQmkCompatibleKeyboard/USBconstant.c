@@ -225,45 +225,15 @@ __code uint8_t RawHIDReportDescriptor[] = {
 __code uint8_t LanguageDescriptor[] = {0x04, 0x03, 0x09,
                                        0x04}; // Language Descriptor
 __code uint16_t SerialDescriptor[] = {
-    // Serial String Descriptor
-    (((13 + 1) * 2) | (DTYPE_String << 8)),
-    'C',
-    'H',
-    '5',
-    '5',
-    'x',
-    ' ',
-    'q',
-    'm',
-    'k',
-    ' ',
-    'k',
-    'b',
-    'd',
+    (((8 + 1) * 2) | (DTYPE_String << 8)),
+    'C','H','5','5','2','Q','M','K',
 };
+
 __code uint16_t ProductDescriptor[] = {
-    // Produce String Descriptor
-    (((18 + 1) * 2) | (DTYPE_String << 8)),
-    'C',
-    'H',
-    '5',
-    '5',
-    'x',
-    'd',
-    'u',
-    'i',
-    'n',
-    'o',
-    ' ',
-    'q',
-    'm',
-    'k',
-    ' ',
-    'k',
-    'b',
-    'd',
+    (((11 + 1) * 2) | (DTYPE_String << 8)),
+    'Q','m','k','K','e','y','b','o','a','r','d',
 };
 __code uint16_t ManufacturerDescriptor[] = {
-    // SDCC is little endian
-    (((6 + 1) * 2) | (DTYPE_String << 8)), 'D', 'e', 'q', 'i', 'n', 'g',
+    (((7 + 1) * 2) | (DTYPE_String << 8)),
+    '5','B','r','e','e','z','e',
 };

@@ -16,6 +16,10 @@
 #define HALL_PRESS_THRESHOLD    245
 #define HALL_RELEASE_THRESHOLD  225
 
+/* ================== RGB 配置 ================== */
+#define RGB_LED_COUNT     3         // 2x3 = 6 个灯
+#define RGB_BRIGHTNESS    255       // 默认亮度 0-255
+
 // pretend we are BN003 to let via know we are compatible
 #define USB_VID 0x4249
 #define USB_PID 0x4287
