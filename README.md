@@ -1,6 +1,8 @@
 ## Overview
 CZJP is a custom firmware/hardware qmk configuration project based on Arduino example for QMK keyboard devices, featuring WS2812 RGB LED control, USB HID keyboard/mouse emulation, ADC-based hall effect sensor input, and VIA-compatible USB identification.
 
+For more details-> https://5breeze.github.io/CZJP/
+
 ## Core Components & Key Files
 
 ### 1. WS2812 RGB LED Control
